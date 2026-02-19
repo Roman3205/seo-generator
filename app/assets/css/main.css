@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+@layer components {
+  .hov-item {
+    @apply cursor-pointer transition duration-300;
+  }
+}
