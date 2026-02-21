@@ -45,7 +45,7 @@
 </template>
 
 <script lang="ts" setup>
-const {signOut, signIn, data, status} = useAuth()
+const {signOut, status, data} = useAuth()
 const route = useRoute()
 
 const items = ref([
@@ -54,6 +54,15 @@ const items = ref([
       label: "Profile",
       slot: "profile",
       disabled: status.value === 'unauthenticated',
+    },
+  ],
+  [
+    {
+      label: 'Profile',
+      icon: "i-lucide-user-pen",
+      async onSelect() {
+        await navigateTo('/profile')
+      },
     },
   ],
   [

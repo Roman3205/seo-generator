@@ -12,17 +12,21 @@
   "dependencies": {
     "@nuxt/image": "^1.10.0",
     "@nuxt/ui": "^4.4.0",
-    "@nuxtjs/i18n": "^9.5.6",
-    "@sidebase/nuxt-auth": "^0.10.1",
+    "@nuxtjs/mdc": "^0.18.4",
+    "@prisma/client": "6.16.3",
+    "@sidebase/nuxt-auth": "^0.9.4",
     "bcrypt": "^6.0.0",
-    "mongoose": "^8.16.4",
     "next-auth": "^4.21.1",
     "nuxt": "^4.3.1",
     "openai": "^6.22.0",
-    "tailwindcss": "^4.1.18",
+    "tailwindcss": "^4.2.0",
     "typescript": "^5.8.3",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "prisma": "6.16.3"
   }
 }

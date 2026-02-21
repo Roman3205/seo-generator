@@ -1,11 +1,11 @@
 <template>
   <div class="flex w-full flex-col gap-10 items-center justify-center p-8 pt-12">
     <UBadge variant="outline" color="neutral" size="lg" leading-icon="i-lucide-sparkle" class="p-2 bg-indigo-500/20 text-indigo-500 font-semibold">AI-Powered SEO Generator</UBadge>
-    <h1 class="text-6xl font-bold w-2/3 text-center">🚀 SEO-Генератор: Умный контент для вашего сайта за 2 минут</h1>
-    <h3 class="text-xl w-3/5 text-center">
-      Создавайте мета-заголовки, описания, ключевые слова и даже контентные блоки — быстро и бесплатно!
+    <h1 class="text-4xl lg:text-6xl font-bold lg:w-2/3 text-center">🚀 SEO Generator: Smart Content for Your Website in 2 Minutes</h1>
+    <h3 class="text-2xl lg:w-3/5 text-center">
+      Create meta titles, descriptions, keywords, and even content blocks—quickly and for free!
     </h3>
-    <UCard class="w-2/5 my-10">
+    <UCard class="w-11/12 lg:w-2/5 my-8">
       <UForm :schema="schema" :state="state" class="space-y-3 w-full" @submit="onSubmit">
     <UFormField label="Website Title" name="title" required size="xl">
       <UInput v-model="state.title" placeholder="Acme Digital Marketing Agency" class="w-full" />
@@ -26,7 +26,7 @@
       <UTextarea :autoresize="true" v-model="state.description" :rows="4" :maxrows="4" placeholder="Our agency helps small businesses grow their online presence through effective SEO strategies." class="w-full" />
     </UFormField>
 
-    <UButton type="submit" :disabled="blockButton" size="xl" color="info" class="text-lg hov-item mt-3" block leading-icon="i-lucide-flame">
+    <UButton type="submit" variant="subtle" :loading="blockButton" size="xl" color="info" class="text-lg hov-item mt-3" block leading-icon="i-lucide-flame">
       Generate seo content
     </UButton>
   </UForm>
@@ -96,6 +96,15 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       description: "Seo metadata has been generated!",
       timeout: 2000,
     });
+
+    state.title = undefined
+    state.url = undefined
+    state.audience = undefined
+    state.keywords = undefined
+    state.description = undefined
+    state.industry = undefined
+
+    return navigateTo({name: 'seo-id', params: {id: response}})
   } catch (e) {
     return toast.add({
       title: "Error",

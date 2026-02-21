@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   appId: "app",
   future: { compatibilityVersion: 4 },
-  modules: ["@nuxt/ui", "@nuxt/image", "@sidebase/nuxt-auth", '@nuxtjs/i18n'],
+  modules: ["@nuxt/ui", "@nuxt/image", "@sidebase/nuxt-auth", '@nuxtjs/mdc'],
   css: [
     '@/assets/css/main.css'
   ],
@@ -21,7 +21,8 @@ export default defineNuxtConfig({
     baseURL: process.env.AUTH_ORIGIN,
     provider: {
       type: 'authjs'
-    }
+    },
+    globalAppMiddleware: true
   },
   app: {
     head: {

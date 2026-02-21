@@ -78,5 +78,8 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    return JSON.parse(response.choices[0].message.content)
+    const parsedSeoResult = JSON.parse(response.choices[0].message.content) as SeoMetadata
+
+    const seoResult = await prisma.seoResult.create({data: {title: body.title, url: body.url, ...parsedSeoResult, userId: event.context.userId}})
+    return seoResult.id
 })

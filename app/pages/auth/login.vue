@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
+import { loginSchema } from '~~/types/seo-prompt'
 const {signIn} = useAuth()
 
 const toast = useToast()
@@ -18,6 +19,13 @@ const fields: AuthFormField[] = [{
   required: true
 }]
 
+definePageMeta({
+  auth: {
+    unauthenticatedOnly: true,
+    navigateAuthenticatedTo: "/",
+  },
+})
+
 const providers = [{
   label: 'GitHub',
   icon: 'i-simple-icons-github',
@@ -27,15 +35,45 @@ const providers = [{
   }
 }]
 
-const schema = z.object({
-  email: z.email('Invalid email'),
-  password: z.string('Password is required').min(8, 'Must be at least 8 characters')
-})
+const authForm = useTemplateRef('authForm')
+type Schema = z.output<typeof loginSchema>
+const blockButton = ref(false)
 
-type Schema = z.output<typeof schema>
+async function onSubmit(event: FormSubmitEvent<Schema>) {
+  try {
+    blockButton.value = true;
+    const { error } = await signIn("credentials", {
+      email: event.data.email,
+      password: event.data.password,
+      redirect: false,
+    });
+    if (error) {
+      return useToast().add({
+        title: "Error!",
+        color: 'error',
+        description: error || "Bad auth",
+        timeout: 2000,
+      });
+    }
 
-function onSubmit(payload: FormSubmitEvent<Schema>) {
-  console.log('Submitted', payload)
+    useToast().add({
+      title: "Success",
+      description: "You have entered in your account",
+      timeout: 2000,
+    });
+
+    // await navigateTo('/')
+    return navigateTo('/')
+  } catch (e) {
+    return useToast().add({
+      title: "Error",
+      color: 'error',
+      description: e.message || "Something went wrong",
+      timeout: 2000,
+    });
+  } finally {
+    blockButton.value = false;
+  }
 }
 </script>
 
@@ -43,8 +81,9 @@ function onSubmit(payload: FormSubmitEvent<Schema>) {
   <div class="flex flex-col items-center justify-center gap-4 p-4 w-full">
     <UPageCard class="w-full max-w-md">
       <UAuthForm
-        :schema="schema"
-        :submit="{color: 'info', label: 'Continue', size: 'xl', block: true}"
+      ref="authForm"
+        :schema="loginSchema"
+        :submit="{color: 'info', label: 'Continue', variant: 'subtle', size: 'xl', block: true, disabled: blockButton}"
         title="Welcome!"
         description="Enter your credentials to access your account."
         icon="i-lucide-user"
