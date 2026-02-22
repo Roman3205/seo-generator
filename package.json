@@ -3,22 +3,27 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "postinstall": "npx prisma generate",
+    "start": "NITRO_PORT=3035 node .output/server/index.mjs",
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "preview": "nuxt preview"
   },
   "dependencies": {
     "@nuxt/image": "^1.10.0",
     "@nuxt/ui": "^4.4.0",
     "@nuxtjs/mdc": "^0.18.4",
-    "@prisma/client": "6.16.3",
+    "@prisma/adapter-pg": "^7.4.1",
+    "@prisma/adapter-ppg": "^7.4.1",
+    "@prisma/client": "^7.4.1",
+    "@prisma/extension-accelerate": "^3.0.1",
     "@sidebase/nuxt-auth": "^0.9.4",
     "bcrypt": "^6.0.0",
     "next-auth": "^4.21.1",
     "nuxt": "^4.3.1",
     "openai": "^6.22.0",
+    "pg": "^8.18.0",
     "tailwindcss": "^4.2.0",
     "typescript": "^5.8.3",
     "vue": "^3.5.13",
@@ -27,6 +32,9 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
-    "prisma": "6.16.3"
+    "@types/pg": "^8.16.0",
+    "dotenv": "^17.3.1",
+    "prisma": "^7.4.1",
+    "tsx": "^4.21.0"
   }
 }

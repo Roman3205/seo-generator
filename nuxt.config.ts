@@ -16,6 +16,7 @@ export default defineNuxtConfig({
     aiApi: process.env.OPENAI_API,
     githubClientId: process.env.GITHUB_CLIENT_ID,
     githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+    dbUrl: process.env.DATABASE_URL
   },
   auth: {
     baseURL: process.env.AUTH_ORIGIN,
@@ -34,5 +35,5 @@ icon: {
       remote: "jsdelivr",
       // externalizeIconsJson: true,
     },
-}
+},
 });

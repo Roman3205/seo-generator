@@ -35,7 +35,6 @@ const providers = [{
   }
 }]
 
-const authForm = useTemplateRef('authForm')
 type Schema = z.output<typeof loginSchema>
 const blockButton = ref(false)
 
@@ -81,7 +80,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <div class="flex flex-col items-center justify-center gap-4 p-4 w-full">
     <UPageCard class="w-full max-w-md">
       <UAuthForm
-      ref="authForm"
         :schema="loginSchema"
         :submit="{color: 'info', label: 'Continue', variant: 'subtle', size: 'xl', block: true, disabled: blockButton}"
         title="Welcome!"
