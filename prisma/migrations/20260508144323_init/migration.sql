@@ -16,7 +16,7 @@ CREATE TABLE "Account" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "provider" "Provider" NOT NULL,
-    "providerAccountId" TEXT,
+    "providerAccountId" TEXT NOT NULL,
     "password" TEXT,
 
     CONSTRAINT "Account_pkey" PRIMARY KEY ("id")

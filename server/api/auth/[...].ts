@@ -26,136 +26,149 @@ export default NuxtAuthHandler({
             clientId: config.githubClientId,
             clientSecret: config.githubClientSecret,
         }),
+
         // @ts-expect-error
         CredentialsProvider.default({
             name: "credentials",
             origin: config.auth.origin,
-            async authorize (credentials: { email: string; password: string }) {
-                try {
-                    const validator = loginSchema.safeParse(credentials)
-                    if(!validator.success) {
-                        throw createError({
-                            statusCode: 400,
-                            message: 'Validation error'
-                        })
-                    }
-                    return await prisma.$transaction(async (tx) => {
-                        const user = await tx.user.findUnique({where: {
-                            email: credentials.email
-                        }, include: {accounts: {where: {provider: 'credentials'}}}})
-                        if (!user) {
-                            const hashedPassword = await bcrypt.hash(credentials.password, 10)
-                            const user = await tx.user.create({data: {
-                                email: credentials.email,
-                            }})
-                            await tx.account.create({data: {
-                                userId: user.id,
-                                password: hashedPassword,
-                                provider: 'credentials'
-                            }})
-
-                            return {
-                                id: user.id
-                            }
-                        }
-                        const credentialsAccount = user.accounts[0]
-                        if (!credentialsAccount || !credentialsAccount.password) {
-                            const hashedPassword = await bcrypt.hash(credentials.password, 10)
-        
-                            await tx.account.create({data: {
-                                userId: user.id,
-                                password: hashedPassword,
-                                provider: 'credentials'
-                            }})
-
-                            return {
-                                id: user.id
-                            }
-                        }
-                        const isPasswordMatches = await bcrypt.compare(credentials.password, credentialsAccount.password)
-
-                        if (!isPasswordMatches) {
-                            throw createError({
-                                statusCode: 400,
-                                message: "Incorrect password",
-                            });
-                        }
-                        return {
-                            id: user.id
-                        }
-                    })
-                } catch (e) {
+            async authorize(credentials: { email?: string; password?: string }) {
+                const validator = loginSchema.safeParse(credentials)
+                if(!validator.success) {
                     throw createError({
                         statusCode: 400,
-                        message: e || 'Bad request',
+                        message: 'Validation error'
+                    })
+                }
+                    
+                const { email, password } = validator.data
+                    
+                const user = await prisma.user.findUnique({
+                    where: {email}, 
+                    include: {accounts: true}
+                })
+
+                if (!user) {
+                    const hashedPassword = await bcrypt.hash(password, 10);
+
+                    const newUser = await prisma.user.create({
+                        data: {
+                            email,
+                            accounts: {
+                                create: {
+                                    provider: 'credentials',
+                                    providerAccountId: email,
+                                    password: hashedPassword
+                                }
+                            }
+                        }
                     });
+
+                    return {
+                        id: newUser.id,
+                        email: newUser.email,
+                    };
+                }
+
+                const hasGithubAccount = user?.accounts.some(account => account.provider === 'github')
+                const credentialsAccount = user?.accounts.find(acc => acc.provider === 'credentials');
+
+                if (hasGithubAccount && !credentialsAccount) {
+                    throw createError({
+                        statusCode: 403,
+                        message: "User registered with GitHub. Please use GitHub login.",
+                    });
+                }
+
+                if (!credentialsAccount || !credentialsAccount.password) {
+                    console.warn(`User with email ${email} exists but does not have credentials account.`);
+                    throw createError({ statusCode: 401, message: "Invalid credentials configuration" });
+                }
+                    
+                const isPasswordMatches = await bcrypt.compare(password, credentialsAccount.password)
+                if (!isPasswordMatches) {
+                    throw createError({
+                        statusCode: 400,
+                        message: "Invalid email or password",
+                    });
+                }
+                
+                return {
+                    id: user.id,
+                    email: user.email,
                 }
             }
         })
     ],
     pages: {
-        signIn: '/auth/login'
+        signIn: '/auth/login',
+        error: '/auth/login'
     },
     session: {
         strategy: 'jwt'
     },
     callbacks: {
         async signIn({user, account, profile, email, credentials}) {
-            const emailFromGithub = user.email || profile?.email
-            if (account?.provider === 'github' && emailFromGithub) {
-                return await prisma.$transaction(async (tx) => {
-                    const existingUser = await tx.user.findUnique({where: {
-                        email: emailFromGithub
-                    }, include: {accounts: {where: {provider: 'github', providerAccountId: user.id}}}})
+            if (account?.provider === 'github') {
+                const email = user.email || profile?.email
+                if (!email) return false
 
-                    if (!existingUser) {
-                        const newUser = await tx.user.create({data: {
-                            email: emailFromGithub,
-                        }})
-                        await tx.account.create({data: {
-                            userId: newUser.id,
-                            provider: 'github',
-                            providerAccountId: user.id
-                        }})
+                const existingUser = await prisma.user.findUnique({
+                    where: { email },
+                    include: { accounts: true }
+                });
 
-                        user.id = newUser.id
-                        account.userId = newUser.id
-                        return true
+                if (existingUser) {
+                    const hasCredentialsAccount = existingUser.accounts.some(acc => acc.provider === 'credentials');
+                    const hasGithubAccount = existingUser.accounts.some(acc => acc.provider === 'github');
+
+                    if (hasCredentialsAccount && !hasGithubAccount) {
+                        throw createError({
+                            statusCode: 403,
+                            message: "OAuthAccountNotLinked",
+                        });
                     }
 
-                    const githubAccount = existingUser.accounts[0]
-                    if (!githubAccount) {
-                        await tx.account.create({data: {
-                            userId: existingUser.id,
-                            provider: 'github',
-                            providerAccountId: user.id
-                        }})
+                    if (!hasGithubAccount) {
+                        console.warn(`User with email ${email} exists but does not have a GitHub account linked.`);
+                        throw createError({ statusCode: 401, message: "Configuration" });
                     }
 
                     user.id = existingUser.id
                     account.userId = existingUser.id
 
-                    return true
-                })
-            }
+                } else {
+                    const newUser = await prisma.user.create({
+                        data: { 
+                            email,
+                            accounts: {
+                                create: {
+                                    provider: 'github',
+                                    providerAccountId: account.providerAccountId
+                                }
+                            }
+                        },
+                    });
 
+                    user.id = newUser.id;
+                    account.userId = newUser.id;
+                }
+            }
 
             return true
         },
+        
         async jwt({ token, user }) {
             if (user) {
-                token = {
-                ...user,
-                ...token,
-                };
+                token.id = user.id;
             }
+
             return token;
         },
+
         async session({ session, token }) {
             const refreshedUser = await getUser(String(token.id));
 
             session.user = {
-                ...token,
                 ...session.user,
                 ...refreshedUser,
             };

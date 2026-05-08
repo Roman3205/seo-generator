@@ -20,7 +20,7 @@ model Account {
   id               String   @id @default(uuid())
   userId            String
   provider          Provider
-  providerAccountId String?
+  providerAccountId String
   password          String?
   user User @relation(fields: [userId], references: [id])
 

@@ -5,6 +5,9 @@ import { loginSchema } from '~~/types/seo-prompt'
 const {signIn} = useAuth()
 
 const toast = useToast()
+const route = useRoute()
+const router = useRouter()
+
 const fields: AuthFormField[] = [{
   name: 'email',
   type: 'email',
@@ -51,14 +54,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         title: "Error!",
         color: 'error',
         description: error || "Bad auth",
-        timeout: 2000,
+        timeout: 4000,
       });
     }
 
     useToast().add({
       title: "Success",
       description: "You have entered in your account",
-      timeout: 2000,
+      timeout: 4000,
     });
 
     // await navigateTo('/')
@@ -68,12 +71,39 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       title: "Error",
       color: 'error',
       description: e.message || "Something went wrong",
-      timeout: 2000,
+      timeout: 4000,
     });
   } finally {
     blockButton.value = false;
   }
 }
+
+onMounted(() => {
+  const errorMessages: Record<string, string> = {
+    Configuration: 'Server configuration error. Please contact support.',
+    AccessDenied: 'Access denied. (You might have cancelled the GitHub authorization).',
+    Verification: 'The verification token has expired or has already been used.',
+    Default: 'An unexpected error occurred.',
+    OAuthAccountNotLinked: 'This email is already in use. Please sign in using your email and password.',
+  }
+
+  const errorCode = route.query.error as string | undefined
+  
+  if (errorCode) {
+    const readableMessage = errorMessages[errorCode] || errorMessages.Default
+
+    toast.add({
+      title: "Error",
+      color: 'error',
+      description: readableMessage,
+      timeout: 4000, 
+    });
+
+    const newQuery = { ...route.query }
+    delete newQuery.error
+    router.replace({ query: newQuery })
+  }
+})
 </script>
 
 <template>
